@@ -49,7 +49,7 @@ def get_url_content(url):
 
 def save_file(app_info_dict,tmp):
     if not os.path.exists(tmp):
-        os.mkdir(tmp)
+        os.makedirs(tmp)
     num = len(app_info_dict)
     pd_info = pd.DataFrame(app_info_dict).T
     file_name = "appInfo%s.xlsx"%pd.datetime.now().strftime('%Y%m%d%H%M%S')
@@ -62,18 +62,18 @@ def get_working_page():
     logname = 'working_page.log'
     if not os.path.exists(logname) or not os.path.getsize(logname):
         return None
-    with open(logname) as f:
-        pos = 0
+    with open(logname,'rb') as f:
+        pos = -1
         while True:
             pos = pos - 1
             try:
                 f.seek(pos, 2)  #从文件末尾开始读
-                if f.read(1) == '\n':
+                if f.read(1) == b'\n':
                     break
             except:     #到达文件第一行，直接读取，退出
                 f.seek(0, 0)
-                return f.readline().strip()[33:]
-        return f.readline().strip()[33:]
+                return str(f.readline().strip()[33:])
+        return str(f.readline().strip()[33:], encoding = "utf-8")
 
 
 def get_finish_run():
@@ -130,7 +130,7 @@ def merge(tmp):
     if fs == []:
         return
     df = pd.concat(map(lambda x: pd.read_excel(x),fs))
-    df.to_excel('appInfo.xlsx')
+    df.to_excel(tmp+'appInfo.xlsx')
 
 
 def main():
@@ -144,7 +144,7 @@ def main():
         if first and last_working:
             u = last_working
             first = False
-        tmp = 'tmp_%s/'%u[14:21]
+        tmp = 'tmp/tmp_%s/'%u[21:28]
         parse_one(get_url_content(u),burl,tmp)
         logger_big.info(u)
         merge(tmp)
