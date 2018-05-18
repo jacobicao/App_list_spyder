@@ -122,9 +122,7 @@ def get_url_list(soup,burl):
             continue
         name_map[one.get('href')] = title.get_text()
     finishLinks = get_finish_run()
-    innerLinks = list(innerLinks - finishLinks)
-    innerLinks.sort()
-    return innerLinks,name_map
+    return innerLinks - finishLinks,name_map
 
 
 def merge(tmp):
@@ -142,7 +140,7 @@ def main():
     innerLinks, nameMap = get_url_list(get_url_content(burl+game_url),burl)
     last_working = get_working_page()
     first = True
-    for u in innerLinks:
+    for u in sorted(innerLinks):
         if first and last_working:
             u = last_working
             first = False
