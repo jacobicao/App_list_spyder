@@ -2,3 +2,5 @@
 .DS_Store
 *.xlsx
 *.log
+*.zip
+*.csv

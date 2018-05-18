@@ -85,11 +85,7 @@ def get_finish_run():
 def parse_one(soup,burl,tmp):
     app_info_dict = defaultdict(lambda :defaultdict())
     info = soup.find(class_="app_list border_three").ul.find_all("li")
-    cc = 0
     for one in info:
-        cc += 1
-        if cc == 3:
-            break
         abc = one.find('div',{'class':'app_info'}).find('a')
         tmpurl = abc.get('href')
         app_name = abc.get_text()
@@ -105,9 +101,10 @@ def parse_one(soup,burl,tmp):
                 app_info_dict[tmpurl][ss[0]] = ss[1]
         logger.info('%s OK'%app_name)
     save_file(app_info_dict,tmp)
-    next = soup.find(class_="next").get('href')
-    if next is None:
+    next_tag = soup.find(class_="next")
+    if next_tag is None:
         return
+    next = next_tag.get('href')
     del app_detail,abc,soup,app_info
     logger.info('下一页')
     logger_record.info('%s'%(burl+next))
@@ -116,13 +113,18 @@ def parse_one(soup,burl,tmp):
 
 def get_url_list(soup,burl):
     innerLinks = set()
+    name_map = {}
     ress = re.compile('\/sort.*')
     for one in soup.find_all('a',{'href':ress}):
         innerLinks.add(burl+one.get('href'))
+        title = one.parent.find_previous_sibling('h2')
+        if title is None:
+            continue
+        name_map[one.get('href')] = title.get_text()
     finishLinks = get_finish_run()
     innerLinks = list(innerLinks - finishLinks)
     innerLinks.sort()
-    return innerLinks
+    return innerLinks,name_map
 
 
 def merge(tmp):
@@ -137,14 +139,14 @@ def main():
     burl = "http://www.anzhi.com"
     base_url = '/applist.html'
     game_url = '/gamelist.html'
-    innerLinks = get_url_list(get_url_content(burl+game_url),burl)
+    innerLinks, nameMap = get_url_list(get_url_content(burl+game_url),burl)
     last_working = get_working_page()
     first = True
     for u in innerLinks:
         if first and last_working:
             u = last_working
             first = False
-        tmp = 'tmp/tmp_%s/'%u[21:28]
+        tmp = 'tmp/tmp_%s/'%nameMap[u[20:]]
         parse_one(get_url_content(u),burl,tmp)
         logger_big.info(u)
         merge(tmp)
